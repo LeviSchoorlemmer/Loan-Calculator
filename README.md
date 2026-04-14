@@ -1,0 +1,542 @@
+# Loan-Calculator
+A comprehensive loan and debt calculator with live amortization schedules, adjustable/fixed rate support, multi-lender splits, fee breakdowns, and interactive charts. No sign-up required — runs entirely in your browser.
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Loan &amp; Debt Calculator</title>
+<meta name="description" content="A comprehensive loan and debt calculator with live amortization schedules, adjustable/fixed rate support, multi-lender splits, fee breakdowns, and interactive charts."/>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;background:linear-gradient(135deg,#0f172a 0%,#0d1f3c 100%);font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#f1f5f9;padding:24px 16px}
+h1{font-size:28px;font-weight:900;background:linear-gradient(90deg,#f1f5f9,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.header{text-align:center;margin-bottom:32px}
+.header .kicker{font-size:11px;letter-spacing:.2em;color:#38bdf8;text-transform:uppercase;margin-bottom:8px}
+.header p{color:#475569;font-size:13px;margin-top:8px}
+.header-actions{display:flex;gap:10px;justify-content:center;margin-top:14px}
+.guide-btn{background:#1e293b;border:1px solid #334155;color:#38bdf8;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:system-ui,sans-serif;transition:all .2s}
+.guide-btn:hover{background:#334155;border-color:#38bdf8}
+.layout{display:flex;gap:24px;flex-wrap:wrap;max-width:1200px;margin:0 auto}
+.left-col{flex:0 0 330px}
+.right-col{flex:1;min-width:300px}
+.card{background:#0f172a;border:1px solid #1e293b;border-radius:16px;padding:20px;margin-bottom:18px}
+.sec-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px}
+.sg{margin-bottom:16px}
+.sg-top{display:flex;justify-content:space-between;margin-bottom:4px}
+.sg-top span:first-child{font-size:12px;color:#94a3b8}
+.sg-top span:last-child{font-size:13px;font-weight:700;color:#f1f5f9;font-family:monospace}
+input[type=range]{width:100%;accent-color:#38bdf8;cursor:pointer}
+.sg-mm{display:flex;justify-content:space-between;font-size:10px;color:#475569;margin-top:2px}
+.ig{margin-bottom:12px}
+.ig label{display:block;font-size:10px;color:#94a3b8;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
+.iw{display:flex;align-items:center;background:#1e293b;border:1px solid #334155;border-radius:8px;overflow:hidden}
+.iw .px,.iw .sx{padding:0 10px;color:#64748b;font-size:13px;font-family:monospace;white-space:nowrap}
+.iw input[type=number]{flex:1;background:transparent;border:none;outline:none;padding:9px 8px;color:#f1f5f9;font-size:13px;font-family:monospace;min-width:0}
+.sel-g{margin-bottom:12px}
+.sel-g label{display:block;font-size:10px;color:#94a3b8;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
+.sel-g select{width:100%;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:9px 12px;color:#f1f5f9;font-size:13px;font-family:monospace;outline:none;cursor:pointer}
+.trow{display:flex;gap:8px;margin-bottom:12px}
+.tbtn{flex:1;padding:9px 0;border-radius:8px;border:none;cursor:pointer;font-weight:700;font-size:13px;font-family:system-ui,sans-serif;transition:all .2s}
+.stat-cards{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.sc{background:#1e293b;border-radius:12px;padding:14px 16px;flex:1;min-width:130px}
+.sc .sl{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+.sc .sv{font-size:18px;font-weight:800;font-family:monospace}
+.sc .ss{font-size:10px;color:#475569;margin-top:3px}
+.tabs{display:flex;gap:8px;margin-bottom:14px}
+.tab{padding:8px 18px;border-radius:8px;border:none;cursor:pointer;font-family:system-ui,sans-serif;font-size:13px;font-weight:600;transition:all .2s}
+.tab.active{background:#38bdf8;color:#0f172a}
+.tab:not(.active){background:#1e293b;color:#64748b}
+.sum-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #0f172a}
+.sum-row span:first-child{color:#64748b;font-size:13px}
+.sum-row span:last-child{color:#f1f5f9;font-size:13px;font-weight:600;font-family:monospace}
+.divider{border-top:1px solid #1e293b;margin:10px 0}
+.amt-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px;font-family:monospace}
+thead th{padding:8px 10px;background:#1e293b;color:#64748b;text-align:right;white-space:nowrap;font-family:system-ui,sans-serif;font-weight:700;font-size:11px}
+tbody td{padding:7px 10px;text-align:right}
+.load-more{margin-top:14px;width:100%;padding:10px 0;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#38bdf8;cursor:pointer;font-size:13px;font-weight:600;font-family:system-ui,sans-serif}
+.footnote{margin-top:10px;font-size:11px;color:#334155}
+.bar-chart{display:flex;align-items:flex-end;gap:3px;height:160px;margin-bottom:20px}
+.bar-wrap{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%}
+.bar-int{background:#f472b6;min-height:1px;border-radius:2px 2px 0 0}
+.bar-prin{background:#38bdf8;min-height:1px}
+.chart-legend{font-size:11px;color:#475569;margin-bottom:6px}
+.pb-row{margin-bottom:10px}
+.pb-top{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+.pb-top span:first-child{color:#94a3b8}
+.pb-track{background:#1e293b;border-radius:4px;height:6px}
+.pb-fill{height:100%;border-radius:4px}
+.hidden{display:none!important}
+
+/* Guide Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:#0f172a;border:1px solid #1e293b;border-radius:20px;max-width:680px;width:100%;max-height:85vh;overflow-y:auto;padding:32px;position:relative;animation:modalIn .25s ease}
+@keyframes modalIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.modal-close{position:absolute;top:16px;right:16px;background:#1e293b;border:none;color:#94a3b8;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.modal-close:hover{background:#334155;color:#f1f5f9}
+.modal h2{font-size:20px;font-weight:800;color:#f1f5f9;margin-bottom:6px}
+.modal .modal-sub{font-size:13px;color:#475569;margin-bottom:24px}
+.guide-section{margin-bottom:24px}
+.guide-section h3{font-size:14px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.guide-section p{font-size:13px;color:#94a3b8;line-height:1.7;margin-bottom:8px}
+.guide-tag{display:inline-block;font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.05em}
+.guide-tip{background:#1e293b;border-left:3px solid #38bdf8;border-radius:0 8px 8px 0;padding:12px 14px;margin:10px 0;font-size:12px;color:#94a3b8;line-height:1.6}
+.guide-tip strong{color:#38bdf8}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="kicker">Comprehensive</div>
+  <h1>Loan &amp; Debt Calculator</h1>
+  <p>All variables. Live results. Zero guesswork.</p>
+  <div class="header-actions">
+    <button class="guide-btn" onclick="toggleGuide()">&#9432; How to Use This Calculator</button>
+  </div>
+</div>
+
+<!-- GUIDE MODAL -->
+<div class="modal-overlay" id="guide-modal" onclick="if(event.target===this)toggleGuide()">
+  <div class="modal">
+    <button class="modal-close" onclick="toggleGuide()">&times;</button>
+    <h2>How to Use This Calculator</h2>
+    <p class="modal-sub">Everything you need to model any loan scenario in under a minute.</p>
+
+    <div class="guide-section">
+      <h3><span class="guide-tag" style="background:#38bdf820;color:#38bdf8">Step 1</span> Core Loan Details</h3>
+      <p>Start by setting your three main variables using the sliders on the left:</p>
+      <p><strong style="color:#f1f5f9">Total Loan Amount</strong> &mdash; The principal you're borrowing ($1K &ndash; $2M).</p>
+      <p><strong style="color:#f1f5f9">Annual Interest Rate</strong> &mdash; The yearly rate your lender charges (0.1% &ndash; 30%).</p>
+      <p><strong style="color:#f1f5f9">Loan Term</strong> &mdash; How many years you have to pay it off (1 &ndash; 30 years).</p>
+      <p><strong style="color:#f1f5f9">Payment Frequency</strong> &mdash; How often you make payments: weekly, bi-weekly, monthly, quarterly, or annually. Paying more frequently reduces total interest.</p>
+      <p><strong style="color:#f1f5f9">Compounding Frequency</strong> &mdash; How often interest gets calculated on your balance. More frequent compounding = slightly more interest paid.</p>
+      <div class="guide-tip"><strong>Tip:</strong> Results update instantly as you move sliders &mdash; no need to press "calculate."</div>
+    </div>
+
+    <div class="guide-section">
+      <h3><span class="guide-tag" style="background:#a78bfa20;color:#a78bfa">Step 2</span> Multiple Lenders (Optional)</h3>
+      <p>If your loan comes from more than one source, increase the lender count. The calculator will show you each lender's share of the total. This is useful for syndicated loans or when you're splitting financing across sources.</p>
+    </div>
+
+    <div class="guide-section">
+      <h3><span class="guide-tag" style="background:#fb923c20;color:#fb923c">Step 3</span> Fixed vs. Adjustable Rate</h3>
+      <p><strong style="color:#f1f5f9">Fixed</strong> &mdash; Your rate stays the same for the entire loan. Predictable payments.</p>
+      <p><strong style="color:#f1f5f9">Adjustable</strong> &mdash; The rate changes after a set number of years. When you select this, you'll enter when the rate adjusts and what the new rate will be. Great for modeling ARM mortgages or variable-rate loans.</p>
+    </div>
+
+    <div class="guide-section">
+      <h3><span class="guide-tag" style="background:#f472b620;color:#f472b6">Step 4</span> Fees &amp; Costs</h3>
+      <p>Add any upfront costs to see the true cost of your loan:</p>
+      <p><strong style="color:#f1f5f9">Origination Fee (flat $)</strong> &mdash; A fixed dollar fee the lender charges.</p>
+      <p><strong style="color:#f1f5f9">Origination Fee (%)</strong> &mdash; A fee calculated as a percentage of your loan amount.</p>
+      <p><strong style="color:#f1f5f9">Closing Costs</strong> &mdash; Legal, appraisal, and other costs to finalize the loan.</p>
+      <p><strong style="color:#f1f5f9">Prepaid Interest</strong> &mdash; Days of interest you pay upfront before your first regular payment begins.</p>
+      <div class="guide-tip"><strong>Tip:</strong> These fees are factored into the APR calculation, so you can compare offers from different lenders on equal footing.</div>
+    </div>
+
+    <div class="guide-section">
+      <h3><span class="guide-tag" style="background:#34d39920;color:#34d399">Step 5</span> Repayment Options</h3>
+      <p><strong style="color:#f1f5f9">Extra Payment</strong> &mdash; Any additional amount you pay each period on top of the minimum. Even small extra payments can save thousands in interest and shorten your loan significantly.</p>
+      <p><strong style="color:#f1f5f9">Grace Period</strong> &mdash; Interest-only months at the start where you don't pay down principal (common with student loans).</p>
+      <p><strong style="color:#f1f5f9">Balloon Payment</strong> &mdash; A large lump-sum payment due at a specific period number. Set the period and the amount. Used in commercial loans and some mortgages.</p>
+    </div>
+
+    <div class="guide-section">
+      <h3><span class="guide-tag" style="background:#94a3b820;color:#94a3b8">Reading Your Results</span></h3>
+      <p>The four cards at the top show your key numbers at a glance: payment per period, total interest, effective APR, and estimated payoff date.</p>
+      <p>Use the three tabs to dig deeper:</p>
+      <p><strong style="color:#f1f5f9">Summary</strong> &mdash; A full breakdown of every number: principal, interest, fees, rates, and total cost.</p>
+      <p><strong style="color:#f1f5f9">Chart</strong> &mdash; Visual breakdown showing how your payments split between principal and interest over time, your remaining balance curve, and a total cost pie chart.</p>
+      <p><strong style="color:#f1f5f9">Schedule</strong> &mdash; The full amortization table showing every single payment, period by period. Rows marked "g" are grace periods, "b" marks the balloon payment.</p>
+    </div>
+
+    <div class="guide-section" style="margin-bottom:0">
+      <div class="guide-tip" style="border-left-color:#34d399"><strong>Privacy note:</strong> This calculator runs 100% in your browser. No data is sent anywhere &mdash; your financial info never leaves your device.</div>
+    </div>
+
+  </div>
+</div>
+
+<div class="layout">
+  <div class="left-col">
+
+    <div class="card">
+      <div class="sec-label" style="color:#38bdf8">&#9312; Core Loan</div>
+      <div class="sg">
+        <div class="sg-top"><span>Total Loan Amount</span><span id="d-loan">$50,000</span></div>
+        <input type="range" id="s-loan" min="1000" max="2000000" step="1000" value="50000" oninput="calc()"/>
+        <div class="sg-mm"><span>$1,000</span><span>$2,000,000</span></div>
+      </div>
+      <div class="sg">
+        <div class="sg-top"><span>Annual Interest Rate</span><span id="d-rate">6.50%</span></div>
+        <input type="range" id="s-rate" min="0.1" max="30" step="0.1" value="6.5" oninput="calc()"/>
+        <div class="sg-mm"><span>0.1%</span><span>30%</span></div>
+      </div>
+      <div class="sg">
+        <div class="sg-top"><span>Loan Term</span><span id="d-term">5 years</span></div>
+        <input type="range" id="s-term" min="1" max="30" step="1" value="5" oninput="calc()"/>
+        <div class="sg-mm"><span>1 yr</span><span>30 yrs</span></div>
+      </div>
+      <div class="sel-g">
+        <label>Payment Frequency</label>
+        <select id="pay-freq" onchange="calc()">
+          <option>Weekly</option><option>Bi-Weekly</option>
+          <option selected>Monthly</option><option>Quarterly</option><option>Annually</option>
+        </select>
+      </div>
+      <div class="sel-g">
+        <label>Compounding Frequency</label>
+        <select id="comp-freq" onchange="calc()">
+          <option>Daily</option><option selected>Monthly</option>
+          <option>Quarterly</option><option>Semi-Annually</option><option>Annually</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-label" style="color:#a78bfa">&#9313; Lenders</div>
+      <div class="sg">
+        <div class="sg-top"><span>Number of Lenders</span><span id="d-lenders">1 lender</span></div>
+        <input type="range" id="s-lenders" min="1" max="10" step="1" value="1" oninput="calc()"/>
+        <div class="sg-mm"><span>1</span><span>10</span></div>
+      </div>
+      <div id="lender-info" style="background:#1e293b;border-radius:8px;padding:12px;font-size:12px;color:#a78bfa;display:none"></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-label" style="color:#fb923c">&#9314; Rate Type</div>
+      <div class="trow">
+        <button class="tbtn" id="btn-fixed" style="background:#fb923c;color:#0f172a" onclick="setRate('Fixed')">Fixed</button>
+        <button class="tbtn" id="btn-adj" style="background:#1e293b;color:#64748b" onclick="setRate('Adjustable')">Adjustable</button>
+      </div>
+      <div id="adj-fields" class="hidden">
+        <div class="ig">
+          <label>Rate adjusts after (years)</label>
+          <div class="iw"><input type="number" id="adj-year" value="3" min="1" step="1" oninput="calc()"/><span class="sx">yrs</span></div>
+        </div>
+        <div class="ig">
+          <label>Adjusted interest rate (%)</label>
+          <div class="iw"><input type="number" id="adj-rate" value="8.0" min="0" step="0.1" oninput="calc()"/><span class="sx">%</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-label" style="color:#f472b6">&#9315; Fees &amp; Costs</div>
+      <div class="ig">
+        <label>Origination Fee (flat $)</label>
+        <div class="iw"><span class="px">$</span><input type="number" id="orig-flat" value="0" min="0" step="100" oninput="calc()"/></div>
+      </div>
+      <div class="ig">
+        <label>Origination Fee (% of loan)</label>
+        <div class="iw"><input type="number" id="orig-pct" value="0" min="0" step="0.1" oninput="calc()"/><span class="sx">%</span></div>
+      </div>
+      <div class="ig">
+        <label>Closing Costs ($)</label>
+        <div class="iw"><span class="px">$</span><input type="number" id="closing" value="0" min="0" step="100" oninput="calc()"/></div>
+      </div>
+      <div class="ig">
+        <label>Prepaid Interest (days before first payment)</label>
+        <div class="iw"><input type="number" id="prepaid-days" value="0" min="0" step="1" oninput="calc()"/><span class="sx">days</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-label" style="color:#34d399">&#9316; Repayment Options</div>
+      <div class="ig">
+        <label id="extra-label">Extra Payment per period ($)</label>
+        <div class="iw"><span class="px">$</span><input type="number" id="extra-pay" value="0" min="0" step="50" oninput="calc()"/></div>
+      </div>
+      <div class="ig">
+        <label>Grace Period (interest-only months)</label>
+        <div class="iw"><input type="number" id="grace" value="0" min="0" step="1" oninput="calc()"/><span class="sx">mo</span></div>
+      </div>
+      <div class="ig">
+        <label>Balloon Payment at Period # (0 = none)</label>
+        <div class="iw"><input type="number" id="balloon-at" value="0" min="0" step="1" oninput="calc()"/><span class="sx">period</span></div>
+      </div>
+      <div class="ig" id="balloon-amt-wrap" style="display:none">
+        <label>Balloon Amount ($)</label>
+        <div class="iw"><span class="px">$</span><input type="number" id="balloon-amt" value="0" min="0" step="1000" oninput="calc()"/></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="right-col">
+
+    <div class="stat-cards">
+      <div class="sc" style="border:1px solid #38bdf8">
+        <div class="sl">Payment / Period</div>
+        <div class="sv" style="color:#38bdf8" id="r-payment">&mdash;</div>
+        <div class="ss" id="r-payment-sub"></div>
+      </div>
+      <div class="sc" style="border:1px solid #f472b6">
+        <div class="sl">Total Interest</div>
+        <div class="sv" style="color:#f472b6" id="r-interest">&mdash;</div>
+        <div class="ss" id="r-interest-sub"></div>
+      </div>
+      <div class="sc" style="border:1px solid #fb923c">
+        <div class="sl">APR</div>
+        <div class="sv" style="color:#fb923c" id="r-apr">&mdash;</div>
+        <div class="ss">Effective annual rate</div>
+      </div>
+      <div class="sc" style="border:1px solid #34d399">
+        <div class="sl">Payoff Date</div>
+        <div class="sv" style="color:#34d399" id="r-payoff">&mdash;</div>
+        <div class="ss" id="r-periods"></div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('summary',this)">Summary</button>
+      <button class="tab" onclick="showTab('chart',this)">Chart</button>
+      <button class="tab" onclick="showTab('schedule',this)">Schedule</button>
+    </div>
+
+    <div id="tab-summary" class="card">
+      <div class="sec-label" style="color:#94a3b8">Loan Summary</div>
+      <div id="summary-rows"></div>
+    </div>
+
+    <div id="tab-chart" class="card hidden">
+      <div class="sec-label" style="color:#94a3b8">Payment Breakdown Over Time</div>
+      <div class="chart-legend"><span style="color:#38bdf8">&#9632;</span> Principal &nbsp;<span style="color:#f472b6">&#9632;</span> Interest</div>
+      <div class="bar-chart" id="bar-chart"></div>
+      <div class="sec-label" style="color:#94a3b8">Remaining Balance Over Time</div>
+      <svg id="balance-svg" width="100%" height="100" viewBox="0 0 100 100" preserveAspectRatio="none" style="margin-bottom:4px">
+        <defs>
+          <linearGradient id="balGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#34d399" stop-opacity="0.4"/>
+            <stop offset="100%" stop-color="#34d399" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <polygon id="bal-area" fill="url(#balGrad)"/>
+        <polyline id="bal-line" fill="none" stroke="#34d399" stroke-width="1.2"/>
+      </svg>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:#475569;margin-bottom:20px">
+        <span id="bal-start">&mdash;</span><span style="color:#34d399">End: $0</span>
+      </div>
+      <div style="border-top:1px solid #1e293b;padding-top:16px">
+        <div class="sec-label" style="color:#94a3b8">Total Cost Breakdown</div>
+        <div id="pie-bars"></div>
+      </div>
+    </div>
+
+    <div id="tab-schedule" class="card hidden">
+      <div class="sec-label" style="color:#94a3b8">Amortization Schedule</div>
+      <div class="amt-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Payment</th>
+              <th style="color:#38bdf8">Principal</th>
+              <th style="color:#f472b6">Interest</th>
+              <th>Balance</th><th>Cum. Interest</th>
+            </tr>
+          </thead>
+          <tbody id="sched-body"></tbody>
+        </table>
+      </div>
+      <button class="load-more" id="load-more-btn" onclick="loadMore()">Load More</button>
+      <div class="footnote">g = Grace period (interest only) &nbsp;|&nbsp; b = Balloon payment period</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const FREQ={Weekly:52,'Bi-Weekly':26,Monthly:12,Quarterly:4,Annually:1};
+const COMPOUND={Daily:365,Monthly:12,Quarterly:4,'Semi-Annually':2,Annually:1};
+let rateType='Fixed',schedule=[],showRows=24,lastCalc={};
+
+const fmt=n=>n.toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2});
+const pct=n=>Number(n).toFixed(3)+'%';
+const v=id=>parseFloat(document.getElementById(id).value)||0;
+const el=id=>document.getElementById(id);
+
+function toggleGuide(){
+  const m=el('guide-modal');
+  m.classList.toggle('open');
+  document.body.style.overflow=m.classList.contains('open')?'hidden':'';
+}
+
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&el('guide-modal').classList.contains('open'))toggleGuide();});
+
+function showTab(name,btn){
+  ['summary','chart','schedule'].forEach(t=>el('tab-'+t).classList.toggle('hidden',t!==name));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(name==='chart')renderChart();
+}
+
+function setRate(type){
+  rateType=type;
+  el('btn-fixed').style.background=type==='Fixed'?'#fb923c':'#1e293b';
+  el('btn-fixed').style.color=type==='Fixed'?'#0f172a':'#64748b';
+  el('btn-adj').style.background=type==='Adjustable'?'#fb923c':'#1e293b';
+  el('btn-adj').style.color=type==='Adjustable'?'#0f172a':'#64748b';
+  el('adj-fields').classList.toggle('hidden',type!=='Adjustable');
+  calc();
+}
+
+function calc(){
+  const loan=v('s-loan'),rate=v('s-rate'),term=v('s-term');
+  const lenders=v('s-lenders'),origFlat=v('orig-flat'),origPct=v('orig-pct');
+  const closing=v('closing'),prepDays=v('prepaid-days');
+  const extra=v('extra-pay'),grace=v('grace');
+  const ballAt=v('balloon-at'),ballAmt=v('balloon-amt');
+  const adjYear=v('adj-year'),adjRate=v('adj-rate');
+  const payFreqStr=el('pay-freq').value,compFreqStr=el('comp-freq').value;
+
+  el('d-loan').textContent=fmt(loan);
+  el('d-rate').textContent=rate.toFixed(2)+'%';
+  el('d-term').textContent=term+' year'+(term>1?'s':'');
+  el('d-lenders').textContent=lenders+' lender'+(lenders>1?'s':'');
+  el('extra-label').textContent='Extra Payment per '+payFreqStr.toLowerCase()+' period ($)';
+
+  if(lenders>1){
+    el('lender-info').style.display='block';
+    el('lender-info').innerHTML='Each lender funds <strong style="color:#f1f5f9">'+fmt(loan/lenders)+'</strong><br>('+((100/lenders).toFixed(1))+'% of total)';
+  } else el('lender-info').style.display='none';
+
+  el('balloon-amt-wrap').style.display=ballAt>0?'block':'none';
+
+  const ppy=FREQ[payFreqStr],cpy=COMPOUND[compFreqStr],totP=term*ppy;
+  const nomM=rate/100/cpy,effAnn=Math.pow(1+nomM,cpy)-1;
+  const perRate=Math.pow(1+effAnn,1/ppy)-1;
+  const flatFees=origFlat+(loan*origPct/100)+closing;
+  const prepInt=(loan*rate/100/365)*prepDays;
+  const totFees=flatFees+prepInt;
+
+  let basePmt=perRate===0?loan/totP:loan*perRate*Math.pow(1+perRate,totP)/(Math.pow(1+perRate,totP)-1);
+
+  let bal=loan,totInt=0,totPrin=0;
+  schedule=[];
+  const gracePds=Math.round(grace*(ppy/12));
+  const adjPd=adjYear*ppy;
+
+  for(let p=1;p<=totP+gracePds+10;p++){
+    const isGrace=p<=gracePds;
+    let curRate=perRate;
+    if(rateType==='Adjustable'&&p>adjPd){
+      const ae=Math.pow(1+adjRate/100/cpy,cpy)-1;
+      curRate=Math.pow(1+ae,1/ppy)-1;
+    }
+    const intDue=bal*curRate;
+    let pmt,prin,intP;
+    if(isGrace){intP=intDue;prin=0;pmt=intDue;}
+    else{
+      let ep=basePmt;
+      if(rateType==='Adjustable'&&p>adjPd){
+        const remP=totP-(p-1-gracePds);
+        if(remP>0)ep=curRate===0?bal/remP:bal*curRate*Math.pow(1+curRate,remP)/(Math.pow(1+curRate,remP)-1);
+      }
+      pmt=Math.min(ep+extra,bal+intDue);
+      intP=intDue;prin=Math.max(0,pmt-intP);
+    }
+    totInt+=intP;totPrin+=prin;bal=Math.max(0,bal-prin);
+    const isBal=ballAt>0&&p===ballAt;
+    let ballEx=0;
+    if(isBal){ballEx=Math.min(ballAmt,bal);bal=Math.max(0,bal-ballEx);totPrin+=ballEx;}
+    schedule.push({period:p,payment:pmt+ballEx,principal:prin+ballEx,interest:intP,balance:bal,isGrace,isBalloon:isBal,cumInt:totInt});
+    if(bal<=0.01)break;
+  }
+
+  const totalPaid=loan+totInt,totalCost=totalPaid+totFees;
+
+  let aprG=rate/100;
+  for(let i=0;i<60;i++){
+    const r=aprG/ppy;if(r===0)break;
+    const pv=basePmt*(1-Math.pow(1+r,-totP))/r;
+    const dpv=-basePmt*(totP*Math.pow(1+r,-(totP+1))/r-(1-Math.pow(1+r,-totP))/(r*r));
+    const f=pv-(loan-flatFees);if(Math.abs(f)<0.001)break;
+    aprG-=f/dpv;
+  }
+  const apr=Math.max(0,aprG*100);
+
+  const pd=new Date();
+  pd.setMonth(pd.getMonth()+Math.ceil(schedule.length/(ppy/12)));
+  const payoffLabel=pd.toLocaleDateString('en-US',{month:'short',year:'numeric'});
+
+  lastCalc={loan,rate,lenders,extra,ppy,totInt,totalPaid,totalCost,totFees,prepInt,flatFees,closing,origFlat,origPct,apr,effAnn,perRate,payoffLabel};
+
+  el('r-payment').textContent=fmt(basePmt+extra);
+  el('r-payment-sub').textContent=extra>0?'Incl. '+fmt(extra)+' extra':'';
+  el('r-interest').textContent=fmt(totInt);
+  el('r-interest-sub').textContent=((totInt/loan)*100).toFixed(1)+'% of principal';
+  el('r-apr').textContent=pct(apr);
+  el('r-payoff').textContent=payoffLabel;
+  el('r-periods').textContent=schedule.length+' payments';
+
+  const rows=[
+    ['Loan Principal',fmt(loan)],['Base Payment',fmt(basePmt)],
+    ['Extra Payment / Period',fmt(extra)],['Total Payments Made',schedule.length],
+    ['Total Principal Paid',fmt(loan)],['Total Interest Paid',fmt(totInt)],
+    ['Total Amount Paid',fmt(totalPaid)],null,
+    ['Origination Fee (flat)',fmt(origFlat)],
+    ['Origination Fee (%)',fmt(loan*origPct/100)],
+    ['Closing Costs',fmt(closing)],['Prepaid Interest',fmt(prepInt)],
+    ['Total Fees & Costs',fmt(totFees)],null,
+    ['Total Cost of Loan',fmt(totalCost)],
+    ['Effective APR',pct(apr)],
+    ['Effective Annual Rate',(effAnn*100).toFixed(4)+'%'],
+    ['Periodic Rate',(perRate*100).toFixed(6)+'%'],
+    ['Per-Lender Exposure',fmt(loan/lenders)],null,
+    ['Payment Frequency',payFreqStr],['Compounding',compFreqStr],['Rate Type',rateType],
+  ];
+  el('summary-rows').innerHTML=rows.map(r=>r===null
+    ?'<div class="divider"></div>'
+    :'<div class="sum-row"><span>'+r[0]+'</span><span>'+r[1]+'</span></div>'
+  ).join('');
+
+  renderSchedule();
+  if(!el('tab-chart').classList.contains('hidden'))renderChart();
+}
+
+function renderChart(){
+  if(!schedule.length)return;
+  const step=Math.max(1,Math.floor(schedule.length/28));
+  const data=schedule.filter((_,i)=>i%step===0);
+  const maxBar=Math.max(...data.map(d=>d.interest+d.principal),1);
+  const maxBal=Math.max(...data.map(d=>d.balance),1);
+
+  el('bar-chart').innerHTML=data.map(d=>`<div class="bar-wrap"><div class="bar-int" style="height:${(d.interest/maxBar)*100}%"></div><div class="bar-prin" style="height:${(d.principal/maxBar)*100}%"></div></div>`).join('');
+
+  const n=Math.max(data.length-1,1);
+  const pts=data.map((d,i)=>`${(i/n)*100},${100-(d.balance/maxBal)*95}`).join(' ');
+  el('bal-line').setAttribute('points',pts);
+  el('bal-area').setAttribute('points','0,100 '+pts+' 100,100');
+  el('bal-start').textContent='Start: '+fmt(lastCalc.loan);
+
+  const {loan,totInt,totFees,totalCost}=lastCalc;
+  el('pie-bars').innerHTML=[
+    ['Principal',loan,'#38bdf8'],
+    ['Total Interest',totInt,'#f472b6'],
+    ['Fees & Costs',totFees,'#fb923c'],
+  ].map(([label,val,color])=>{
+    const p=totalCost>0?((val/totalCost)*100).toFixed(1):0;
+    return`<div class="pb-row"><div class="pb-top"><span>${label}</span><span style="color:${color};font-weight:700;font-family:monospace">${fmt(val)} (${p}%)</span></div><div class="pb-track"><div class="pb-fill" style="background:${color};width:${p}%"></div></div></div>`;
+  }).join('');
+}
+
+function renderSchedule(){showRows=24;buildRows();}
+function buildRows(){
+  el('sched-body').innerHTML=schedule.slice(0,showRows).map(r=>{
+    const bg=r.isBalloon?'#1c2a1a':r.isGrace?'#1a1f2e':r.period%2===0?'#0a0f1e':'transparent';
+    const nc=r.isGrace?'#fb923c':r.isBalloon?'#34d399':'#475569';
+    return`<tr style="background:${bg}"><td style="color:${nc}">${r.period}${r.isGrace?' g':''}${r.isBalloon?' b':''}</td><td style="color:#f1f5f9">${fmt(r.payment)}</td><td style="color:#38bdf8">${fmt(r.principal)}</td><td style="color:#f472b6">${fmt(r.interest)}</td><td style="color:#94a3b8">${fmt(r.balance)}</td><td style="color:#64748b">${fmt(r.cumInt)}</td></tr>`;
+  }).join('');
+  const btn=el('load-more-btn');
+  btn.style.display=showRows>=schedule.length?'none':'block';
+  if(showRows<schedule.length)btn.textContent='Load More ('+(schedule.length-showRows)+' remaining)';
+}
+function loadMore(){showRows=Math.min(showRows+24,schedule.length);buildRows();}
+
+calc();
+</script>
+</body>
+</html>
